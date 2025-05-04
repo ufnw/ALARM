@@ -79,70 +79,67 @@ def display_sound(number):  # Создаём новую функцию, для �
 
     pygame.quit()
 
+def later_alarm(time_str):  # Функция, для повторения будильника через 5 минут (Вспомогательная для start_cycle)
+    full_datetime = datetime.datetime.combine(datetime.date.today(),datetime.datetime.strptime(time_str, "%H:%M").time())
+
+    full_datetime += datetime.timedelta(minutes=5)
+    full_datetime = full_datetime.strftime("%H:%M")
+    return full_datetime
+
+def again(answe, alarn, ifweek): # Функция, которая удалит будильник, если его повтор не требуется (Вспомогательная для start_cycle)
+    if answe:
+        return
+    if ifweek:
+        alarn.week.remove(str(datetime.date.today().isoweekday()))
+    else:
+        all_alarms.del_alarms(alarn)
+
+
+
 def start_cycle(): # Создаём функцию, на которой будет держаться цикл
 
 
     while all_alarms is not None:
-        pygame.time.delay(100)
-        current_time = datetime.datetime.now().strftime("%H:%M")
-        today = datetime.date.today()
-        for alarn in all_alarms.get_alarms():
-            if alarn.week: # Если со днями недели
-                if current_time == alarn.time and str(datetime.date.today().isoweekday()) in alarn.week:
+        pygame.time.delay(60000) # Создаём задержку, чтобы будильник не потреблял много ресурсов
 
-                    print("\n" * 2, alarn.message, "\n" * 2)
-                    display_sound(alarn.sound)
+        current_time = datetime.datetime.now().strftime("%H:%M") # Инициализируем переменную, в которой находится текущее время
+        today = datetime.date.today() # Инициализируем переменную, в которой находится текущий день недели
+
+        for alarn in all_alarms.get_alarms(): # Проходим по всем будильникам
+
+            if alarn.week: # Если пользователь устанавливал день недели
+
+                if current_time == alarn.time and str(datetime.date.today().isoweekday()) in alarn.week: # Проверяем, сходится ли время и день недели с установленными
+                    print("\n" * 2, alarn.message, "\n" * 2) # Если будильник сработал, печатаем сообщение, переносим строки, чтобы было приятнее смотреть
+
+                    display_sound(alarn.sound) # Включаем будильник
+
                     answe = input("Хотите повторить будильник через 5 минут? Да или + : ").lower().strip()
                     if answe == "Да" or answe == "+":
                         time_str = alarn.time
 
-                    # Преобразуем
-                        full_datetime = datetime.datetime.combine(datetime.date.today(),datetime.datetime.strptime(time_str, "%H:%M").time())
-
-                    # Добавляем 5 минут
-                        full_datetime += datetime.timedelta(minutes=5)
-
-                    # Обновляем строку
-                        alarn.time = full_datetime.strftime("%H:%M")
+                        alarn.time = later_alarm(time_str)
                         continue
 
-                    time_str = alarn.time
-                    full_datetime = datetime.datetime.combine(datetime.date.today(),datetime.datetime.strptime(time_str, "%H:%M").time())
+                    again(alarn.answe,alarn,True) # Удаляем будильник, если пользователю не нужно повторение
 
-
-                    full_datetime += datetime.timedelta(minutes=-1) # Строка, которая убирает постоянное включение будильника в назначенное время
-
-                        # Обновляем строку
-                    alarn.time = full_datetime.strftime("%H:%M")
-                    if alarn.answe:
-                        pass
-                    else:
-                        alarn.week.remove(str(datetime.date.today().isoweekday()))
-                        print(alarn.week)
             else: # Если без дней недели
-
 
                 if current_time == alarn.time:
                     print("\n" * 2, alarn.message, "\n" * 2)
+
                     display_sound(alarn.sound)
+
                     answe = input("\nХотите повторить будильник через 5 минут? Да или + : ").lower().strip()
                     if answe == "Да" or answe == "+":
                         time_str = alarn.time
 
-                        # Преобразуем
-                        full_datetime = datetime.datetime.combine(datetime.date.today(),datetime.datetime.strptime(time_str, "%H:%M").time())
-
-                        # Добавляем 5 минут
-                        full_datetime += datetime.timedelta(minutes=5)
-
-                        # Обновляем строку
-                        alarn.time = full_datetime.strftime("%H:%M")
+                        alarn.time = later_alarm(time_str)
                         continue
-                    if alarn.answe:
-                        pass
-                    else:
-                        all_alarms.del_alarms(alarn)
-    print("Все будильники закончились")
+
+                    again(alarn.answe,alarn, None) # Удаляем будильник, если пользователю не нужно повторение
+
+
 
 def main(): # Создаём основную функцию
     while True:
